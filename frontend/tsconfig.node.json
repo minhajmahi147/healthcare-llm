@@ -1,0 +1,14 @@
+/*
+ * TypeScript options for Node-side config files, currently vite.config.ts only.
+ * Separate from tsconfig.json so browser DOM libs are not applied to Vite's config.
+ */
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler"
+  },
+  "include": ["vite.config.ts"]
+}

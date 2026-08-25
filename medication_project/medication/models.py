@@ -28,7 +28,7 @@ class Patient(models.Model):
 class Medicine(models.Model):
     med_id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255)
-    expire_date = models.DateField()
+    expire_date = models.DateField(null=True, blank=True)
     dosage = models.TextField()
     instruction = models.TextField()
     number_of_pills_in_day = models.IntegerField(default=1)

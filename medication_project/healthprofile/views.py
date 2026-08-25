@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -6,52 +8,65 @@ from django.core.exceptions import ValidationError
 from .models import healthProfile, HealthPlan, DietaryRecommendation
 from medication.models import Patient
 from healthprofile.utils import generate_health_plan, generate_dietry_recommendation
-import requests
-# ...existing code...
+
+logger = logging.getLogger("api_usage")
+
+PROFILE_FIELDS = ['age', 'weight', 'height_feet', 'height_inches', 'disease', 'addition_info']
+
+
+def serialize_profile(profile, created=False):
+    return {
+        "age": profile.age,
+        "weight": profile.weight,
+        "height_feet": profile.height_feet,
+        "height_inches": profile.height_inches,
+        "disease": profile.disease,
+        "addition_info": profile.addition_info or '',
+        "bmi": profile.bmi,
+        "created": created,
+    }
+
 
 @api_view(['GET', 'POST', 'PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def get_health_profile(request):
-    # ensure Patient exists
     patient, _ = Patient.objects.get_or_create(user=request.user, defaults={'name': request.user.username})
 
     if request.method == 'GET':
-        profile, created = healthProfile.objects.get_or_create(
-            user=request.user,
-            patient=patient,
-            defaults={'age': 10, 'weight': 59, 'height_feet': 5, 'height_inches': 2, 'disease': 'humanity'}
-        )
-        return Response({
-            "age": profile.age,
-            "bmi": profile.bmi,
-            "created": created
-        })
+        profile = healthProfile.objects.filter(user=request.user).first()
+        if not profile:
+            return Response({
+                "age": None,
+                "weight": None,
+                "height_feet": None,
+                "height_inches": None,
+                "disease": '',
+                "addition_info": '',
+                "bmi": None,
+                "created": False,
+            })
+        return Response(serialize_profile(profile))
 
-    # For POST/PUT/PATCH accept fields from request body
     payload = request.data if isinstance(request.data, dict) else {}
-    allowed = ['age', 'weight', 'height_feet', 'height_inches', 'disease', 'addition_info']
-    data = {k: payload[k] for k in allowed if k in payload}
+    data = {k: payload[k] for k in PROFILE_FIELDS if k in payload}
 
     if not data:
         return Response({"detail": "No valid fields provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-    profile, created = healthProfile.objects.get_or_create(
-        user=request.user,
-        patient=patient,
-        defaults=data
-    )
-
-    if not created:
-        # update existing
-        for k, v in data.items():
-            setattr(profile, k, v)
     try:
-        profile.save()
+        profile, created = healthProfile.objects.get_or_create(
+            user=request.user,
+            patient=patient,
+            defaults=data
+        )
+        if not created:
+            for k, v in data.items():
+                setattr(profile, k, v)
+            profile.save()
     except ValidationError as exc:
         details = exc.message_dict if hasattr(exc, 'message_dict') else exc.messages
         return Response({"detail": details}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Generate HealthPlan after profile save
     try:
         plan_data = generate_health_plan(profile)
         HealthPlan.objects.create(
@@ -67,29 +82,39 @@ def get_health_profile(request):
             lunch=dietary_data.get('lunch', ''),
             dinner=dietary_data.get('dinner', ''),
             snacks=dietary_data.get('snacks', ''),
-            foods_to_avoid=dietary_data.get('foods_to_avoid', '')
-        ) 
-
-
-    # generate diet and exercise plan 
-        # diet_food_data =
+            food_to_avoid=dietary_data.get('food_to_avoid') or dietary_data.get('foods_to_avoid', ''),
+        )
     except Exception as e:
-        # Log error but don't fail the request
-        print(f"Failed to generate health plan: {e}")
+        logger.exception("Failed to generate health plan")
+        return Response(
+            {"detail": f"Profile saved, but generating your plan failed: {e}"},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
 
-    return Response({
-        "age": profile.age,
-        "bmi": profile.bmi,
-        "created": created
-    }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+    return Response(
+        serialize_profile(profile, created=created),
+        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+    )
 
     
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_health_plan(request):
     from medication.models import Patient
-    patient = Patient.objects.get(user=request.user)
-    plan = HealthPlan.objects.filter(patient=patient).latest('generated_at')
+    patient = Patient.objects.filter(user=request.user).first()
+    if not patient:
+        return Response(
+            {"detail": "Save your health profile first."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    plan = HealthPlan.objects.filter(patient=patient).order_by('-generated_at').first()
+    if not plan:
+        return Response(
+            {"detail": "No health plan available yet. Save your health profile to generate one."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
     return Response({
         "food_chart": plan.food_chart,
         "exercise_plan": plan.exercise_plan,
@@ -101,8 +126,20 @@ def get_health_plan(request):
 @permission_classes([IsAuthenticated])
 def get_dietary_recommendation(request):
     from medication.models import Patient
-    patient = Patient.objects.get(user=request.user)
-    recommendation = DietaryRecommendation.objects.filter(patient=patient).latest('created_at')
+    patient = Patient.objects.filter(user=request.user).first()
+    if not patient:
+        return Response(
+            {"detail": "Save your health profile first."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    recommendation = DietaryRecommendation.objects.filter(patient=patient).order_by('-created_at').first()
+    if not recommendation:
+        return Response(
+            {"detail": "No dietary recommendation available yet. Save your health profile to generate one."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
     return Response({
         "breakfast": recommendation.breakfast,
         "lunch": recommendation.lunch,

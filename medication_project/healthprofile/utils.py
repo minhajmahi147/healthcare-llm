@@ -1,32 +1,30 @@
-import base64
-import requests
-from PyPDF2 import PdfReader
-from dotenv import load_dotenv
-import os
 import json
 
-load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+from medication.utils import TEXT_MODEL, _groq_chat, clean_json_response
 
-# ...existing code...
+
+def _profile_summary(health_profile) -> str:
+    return (
+        f"- Age: {health_profile.age}\n"
+        f"- Weight: {health_profile.weight} kg\n"
+        f"- Height: {health_profile.height_feet} feet {health_profile.height_inches} inches\n"
+        f"- BMI: {health_profile.bmi}\n"
+        f"- Disease: {health_profile.disease}\n"
+        f"- Additional Info: {health_profile.addition_info or 'None'}"
+    )
+
+
+def _parse_json_content(raw: str) -> dict:
+    return json.loads(clean_json_response(raw))
+
 
 def generate_health_plan(health_profile):
-    """
-    Generate a health plan using Groq AI based on healthProfile data.
-    Returns a dict with food_chart, exercise_plan, sleep_plan.
-    """
-    url = "https://api.groq.com/openai/v1/chat/completions"
-
+    """Generate a health plan using Groq based on healthProfile data."""
     user_content = f"""
     Generate a personalized health plan based on the following profile data.
 
     Profile:
-    - Age: {health_profile.age}
-    - Weight: {health_profile.weight} kg
-    - Height: {health_profile.height_feet} feet {health_profile.height_inches} inches
-    - BMI: {health_profile.bmi}
-    - Disease: {health_profile.disease}
-    - Additional Info: {health_profile.addition_info or 'None'}
+    {_profile_summary(health_profile)}
 
     Return ONLY valid JSON. No explanation.
 
@@ -37,61 +35,24 @@ def generate_health_plan(health_profile):
         "sleep_plan": "string (sleep recommendations)"
     }}
     """
-
-    payload = {
-        "model": "llama-3.3-70b-versatile",
-        "messages": [
-            {
-                "role": "system",
-                "content": "You generate personalized health plans into clean JSON."
-            },
-            {
-                "role": "user",
-                "content": user_content
-            }
-        ]
-    }
-
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    response = requests.post(url, json=payload, headers=headers)
-    response.raise_for_status()
-    data = response.json()
-
-    if "choices" not in data or not data["choices"]:
-        raise ValueError(f"AI API Error: {data}")
-
-    raw = data["choices"][0]["message"]["content"]
-    if raw.startswith("```"):
-        raw = raw.strip().replace("```json", "").replace("```", "").strip()
-
-    return json.loads(raw)
-
-
-
-
-# ...existing code...
+    raw = _groq_chat(
+        [
+            {"role": "system", "content": "You generate personalized health plans into clean JSON."},
+            {"role": "user", "content": user_content},
+        ],
+        TEXT_MODEL,
+        timeout=60,
+        temperature=0.2,
+    )
+    return _parse_json_content(raw)
 
 
 def generate_dietry_recommendation(health_profile):
-    """
-    Generate dietary recommendations using Groq AI based on healthProfile data.
-    Returns a dict with breakfast, lunch, dinner recommendations.
-    """
-    url = "https://api.groq.com/openai/v1/chat/completions"
-
+    """Generate dietary recommendations using Groq based on healthProfile data."""
     user_content = f"""
     Generate dietary recommendations for breakfast, lunch, and dinner based on the following health profile:
 
-    - Age: {health_profile.age}
-    - Weight: {health_profile.weight} kg
-    - Height: {health_profile.height_feet} feet {health_profile.height_inches} inches
-    - BMI: {health_profile.bmi}
-    - Disease: {health_profile.disease}
-    - Additional Info: {health_profile.addition_info or 'None'}
+    {_profile_summary(health_profile)}
 
     Return ONLY valid JSON in the following format:
     {{
@@ -102,34 +63,13 @@ def generate_dietry_recommendation(health_profile):
         "food_to_avoid": "string (foods to avoid, optional)"
     }}
     """
-    payload = {
-    "model": "llama-3.3-70b-versatile",
-    "messages": [
-        {
-            "role": "system",
-            "content": "You generate personalized health plans into clean JSON."
-        },
-        {
-            "role": "user",
-            "content": user_content
-        }
-    ]
-}
-
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    response = requests.post(url, json=payload, headers=headers)
-    response.raise_for_status()
-    data = response.json()
-
-    if "choices" not in data or not data["choices"]:
-        raise ValueError(f"AI API Error: {data}")
-
-    raw = data["choices"][0]["message"]["content"]
-    if raw.startswith("```"):
-        raw = raw.strip().replace("```json", "").replace("```", "").strip()
-
-    return json.loads(raw)
+    raw = _groq_chat(
+        [
+            {"role": "system", "content": "You generate personalized dietary recommendations into clean JSON."},
+            {"role": "user", "content": user_content},
+        ],
+        TEXT_MODEL,
+        timeout=60,
+        temperature=0.2,
+    )
+    return _parse_json_content(raw)
