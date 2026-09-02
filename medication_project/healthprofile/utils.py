@@ -73,3 +73,26 @@ def generate_dietry_recommendation(health_profile):
         temperature=0.2,
     )
     return _parse_json_content(raw)
+
+
+def create_plans_for_profile(health_profile):
+    """Create a HealthPlan and DietaryRecommendation from a saved profile."""
+    from .models import DietaryRecommendation, HealthPlan
+
+    plan_data = generate_health_plan(health_profile)
+    HealthPlan.objects.create(
+        patient=health_profile.patient,
+        food_chart=plan_data["food_chart"],
+        exercise_plan=plan_data["exercise_plan"],
+        sleep_plan=plan_data.get("sleep_plan", ""),
+    )
+    dietary_data = generate_dietry_recommendation(health_profile)
+    DietaryRecommendation.objects.create(
+        patient=health_profile.patient,
+        breakfast=dietary_data.get("breakfast", ""),
+        lunch=dietary_data.get("lunch", ""),
+        dinner=dietary_data.get("dinner", ""),
+        snacks=dietary_data.get("snacks", ""),
+        food_to_avoid=dietary_data.get("food_to_avoid")
+        or dietary_data.get("foods_to_avoid", ""),
+    )

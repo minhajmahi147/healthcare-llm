@@ -7,7 +7,7 @@ from rest_framework import status
 from django.core.exceptions import ValidationError
 from .models import healthProfile, HealthPlan, DietaryRecommendation
 from medication.models import Patient
-from healthprofile.utils import generate_health_plan, generate_dietry_recommendation
+from healthprofile.utils import create_plans_for_profile
 
 logger = logging.getLogger("api_usage")
 
@@ -68,22 +68,7 @@ def get_health_profile(request):
         return Response({"detail": details}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        plan_data = generate_health_plan(profile)
-        HealthPlan.objects.create(
-            patient=patient,
-            food_chart=plan_data['food_chart'],
-            exercise_plan=plan_data['exercise_plan'],
-            sleep_plan=plan_data.get('sleep_plan', '')
-        )
-        dietary_data = generate_dietry_recommendation(profile)
-        DietaryRecommendation.objects.create(
-            patient=patient,
-            breakfast=dietary_data.get('breakfast', ''),
-            lunch=dietary_data.get('lunch', ''),
-            dinner=dietary_data.get('dinner', ''),
-            snacks=dietary_data.get('snacks', ''),
-            food_to_avoid=dietary_data.get('food_to_avoid') or dietary_data.get('foods_to_avoid', ''),
-        )
+        create_plans_for_profile(profile)
     except Exception as e:
         logger.exception("Failed to generate health plan")
         return Response(
