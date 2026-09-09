@@ -1,20 +1,30 @@
 /**
  * Auth gate components used in App.tsx.
- * ProtectedRoute: if there is no user in AuthContext, redirect to /login;
- * otherwise render nested authenticated routes.
- * PublicRoute: if already logged in, skip /login and /register and go to /dashboard.
+ * ProtectedRoute: patient app — logged-in non-staff only.
+ * StaffRoute: admin app — logged-in staff only.
+ * PublicRoute: guests only; sends staff to /admin and patients to /dashboard.
  */
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
 export function ProtectedRoute() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isStaff } = useAuth();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (isStaff) return <Navigate to="/admin" replace />;
+  return <Outlet />;
+}
+
+export function StaffRoute() {
+  const { isAuthenticated, isStaff } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isStaff) return <Navigate to="/dashboard" replace />;
   return <Outlet />;
 }
 
 export function PublicRoute() {
-  const { isAuthenticated } = useAuth();
-  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
+  const { isAuthenticated, isStaff } = useAuth();
+  if (isAuthenticated) {
+    return <Navigate to={isStaff ? '/admin' : '/dashboard'} replace />;
+  }
   return <Outlet />;
 }

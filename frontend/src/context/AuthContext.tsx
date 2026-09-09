@@ -1,11 +1,6 @@
 /**
  * React context that owns authentication for the whole app.
- *
- * AuthProvider wraps the tree in main.tsx. On load it restores the username from
- * localStorage so a refresh keeps the user "logged in". login() calls the backend,
- * stores JWT access/refresh tokens, and sets `user`. register() creates the account
- * then logs in. logout() clears storage and user. useAuth() is the hook pages and
- * nav use to read `isAuthenticated` and call these actions.
+ * Stores username + isStaff so patient and admin UIs can split routes.
  */
 import {
   createContext,
@@ -16,14 +11,21 @@ import {
   type ReactNode,
 } from 'react';
 import { authApi } from '@/api/auth.api';
-import type { AuthUser, LoginCredentials, RegisterPayload } from '@/types/auth.types';
+import type {
+  AdminRegisterPayload,
+  AuthUser,
+  LoginCredentials,
+  RegisterPayload,
+} from '@/types/auth.types';
 import { tokenStorage } from '@/utils/storage';
 
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  isStaff: boolean;
+  login: (credentials: LoginCredentials) => Promise<AuthUser>;
   register: (payload: RegisterPayload) => Promise<void>;
+  registerAdmin: (payload: AdminRegisterPayload) => Promise<void>;
   logout: () => void;
 }
 
@@ -32,19 +34,37 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => {
     const username = tokenStorage.getUsername();
-    return username ? { username } : null;
+    if (!username) return null;
+    return { username, isStaff: tokenStorage.getIsStaff() };
   });
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     const tokens = await authApi.login(credentials);
-    tokenStorage.setTokens(tokens.access, tokens.refresh, credentials.username);
-    setUser({ username: credentials.username });
+    const nextUser: AuthUser = {
+      username: tokens.username || credentials.username,
+      isStaff: Boolean(tokens.is_staff),
+    };
+    tokenStorage.setTokens(
+      tokens.access,
+      tokens.refresh,
+      nextUser.username,
+      nextUser.isStaff,
+    );
+    setUser(nextUser);
+    return nextUser;
   }, []);
 
-  const register = useCallback(async (payload: RegisterPayload) => {
-    await authApi.register(payload);
-    await login({ username: payload.username, password: payload.password });
-  }, [login]);
+  const register = useCallback(
+    async (payload: RegisterPayload) => {
+      await authApi.register(payload);
+      await login({ username: payload.username, password: payload.password });
+    },
+    [login],
+  );
+
+  const registerAdmin = useCallback(async (payload: AdminRegisterPayload) => {
+    await authApi.registerAdmin(payload);
+  }, []);
 
   const logout = useCallback(() => {
     tokenStorage.clear();
@@ -55,11 +75,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       isAuthenticated: Boolean(user),
+      isStaff: Boolean(user?.isStaff),
       login,
       register,
+      registerAdmin,
       logout,
     }),
-    [user, login, register, logout],
+    [user, login, register, registerAdmin, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,13 +1,19 @@
 /**
  * Top-level route table for the SPA.
- *
- * Public routes (/login, /register) are wrapped in PublicRoute so logged-in
- * users are sent to the dashboard. All feature pages sit under ProtectedRoute
- * + AppLayout (nav bar). Unknown URLs and `/` redirect to /dashboard.
+ * Patient app under ProtectedRoute + AppLayout.
+ * Admin app under StaffRoute + AdminLayout.
  */
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { AdminLayout } from '@/components/layout/AdminLayout';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { ProtectedRoute, PublicRoute } from '@/components/layout/ProtectedRoute';
+import {
+  ProtectedRoute,
+  PublicRoute,
+  StaffRoute,
+} from '@/components/layout/ProtectedRoute';
+import { AdminPatientDetailPage } from '@/pages/AdminPatientDetailPage';
+import { AdminPatientsPage } from '@/pages/AdminPatientsPage';
+import { AdminRegisterPage } from '@/pages/AdminRegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { DietaryPage } from '@/pages/DietaryPage';
 import { HealthPlanPage } from '@/pages/HealthPlanPage';
@@ -16,6 +22,13 @@ import { LoginPage } from '@/pages/LoginPage';
 import { PrescriptionPage } from '@/pages/PrescriptionPage';
 import { PrescriptionResultPage } from '@/pages/PrescriptionResultPage';
 import { RegisterPage } from '@/pages/RegisterPage';
+import { useAuth } from '@/context/AuthContext';
+
+function HomeRedirect() {
+  const { isAuthenticated, isStaff } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <Navigate to={isStaff ? '/admin' : '/dashboard'} replace />;
+}
 
 export default function App() {
   return (
@@ -36,8 +49,16 @@ export default function App() {
         </Route>
       </Route>
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route element={<StaffRoute />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminPatientsPage />} />
+          <Route path="/admin/patients/:patientId" element={<AdminPatientDetailPage />} />
+          <Route path="/admin/register" element={<AdminRegisterPage />} />
+        </Route>
+      </Route>
+
+      <Route path="/" element={<HomeRedirect />} />
+      <Route path="*" element={<HomeRedirect />} />
     </Routes>
   );
 }

@@ -25,3 +25,14 @@ Local DB is SQLite (db.sqlite3), so you don’t need Docker/Postgres for this se
 cd /home/fusion/Desktop/medication-wrapper/Med-Life-AI-Wrapper-/frontend
 npm install   # first time only
 npm run dev
+
+
+
+instrutionssssssssssssss
+cd "C:\Users\Fusion\Desktop\Projects\medication project\healthcare-llm\medication_project"
+.\.venv\Scripts\python.exe manage.py runserver
+
+
+
+cd "C:\Users\Fusion\Desktop\Projects\medication project\healthcare-llm\frontend"
+npm.cmd run dev

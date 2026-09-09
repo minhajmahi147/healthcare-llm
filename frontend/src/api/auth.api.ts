@@ -1,10 +1,13 @@
 /**
- * Backend calls for authentication. Used only by AuthContext.
- * POST /auth/login/ returns JWT access + refresh tokens.
- * POST /auth/register/ creates the Django user (and Patient), then the context logs in.
+ * Backend calls for authentication.
  */
 import { apiClient } from '@/api/client';
-import type { AuthTokens, LoginCredentials, RegisterPayload } from '@/types/auth.types';
+import type {
+  AdminRegisterPayload,
+  AuthTokens,
+  LoginCredentials,
+  RegisterPayload,
+} from '@/types/auth.types';
 
 export const authApi = {
   login: (credentials: LoginCredentials) =>
@@ -18,4 +21,14 @@ export const authApi = {
       method: 'POST',
       body: payload,
     }),
+
+  registerAdmin: (payload: AdminRegisterPayload) =>
+    apiClient<{ message: string; username: string; is_staff: boolean }>(
+      '/auth/admin/register/',
+      {
+        method: 'POST',
+        body: payload,
+        auth: true,
+      },
+    ),
 };

@@ -1,8 +1,6 @@
 /**
  * Sign-in form shown on LoginPage.
- * Collects username and password, calls AuthContext.login() (which hits
- * /auth/login/ and stores JWTs), then the public-route guard sends the user
- * to the dashboard. Shows API errors and a link to /register.
+ * After login, PublicRoute sends staff to /admin and patients to /dashboard.
  */
 import { FormEvent, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -34,7 +32,10 @@ export function LoginForm() {
   };
 
   return (
-    <Card title="Welcome back" subtitle="Sign in to manage your health profile and plans">
+    <Card
+      title="Welcome back"
+      subtitle="Patients manage their own plans. Staff open the admin console."
+    >
       <form className="stack" onSubmit={handleSubmit}>
         <Input
           label="Username"
@@ -54,10 +55,12 @@ export function LoginForm() {
           required
         />
         <Alert variant="error" message={error} />
-        <Button type="submit" loading={loading}>Sign in</Button>
+        <Button type="submit" loading={loading}>
+          Sign in
+        </Button>
       </form>
       <p className="auth-footer">
-        New here? <Link to="/register">Create an account</Link>
+        New patient? <Link to="/register">Create an account</Link>
       </p>
     </Card>
   );
