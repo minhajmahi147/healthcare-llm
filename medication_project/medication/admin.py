@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Patient, Medicine, Prescription, MedicineScheduler, Reminder
+from .models import Patient, Doctor, Medicine, Prescription, MedicineScheduler, Reminder
 from .models import MedicineScheduler, time_slot
 from .models import SchedulerTime
 
@@ -12,6 +12,13 @@ class SchedulerTimeInline(admin.TabularInline):
 class PatientAdmin(admin.ModelAdmin):
     list_display = ('patient_id', 'name', 'email')
     search_fields = ('name', 'email')
+
+
+@admin.register(Doctor)
+class DoctorAdmin(admin.ModelAdmin):
+    list_display = ('doctor_id', 'name', 'department')
+    search_fields = ('name', 'department')
+    filter_horizontal = ('assigned_patients',)
 
 
 @admin.register(Medicine)

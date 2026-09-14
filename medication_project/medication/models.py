@@ -25,6 +25,21 @@ class Patient(models.Model):
         return self.name
 
 
+class Doctor(models.Model):
+    doctor_id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    department = models.CharField(max_length=255)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="doctor_profile")
+    assigned_patients = models.ManyToManyField(
+        Patient,
+        related_name="doctors",
+        blank=True,
+    )
+
+    def __str__(self):
+        return f"{self.name} ({self.department})"
+
+
 class Medicine(models.Model):
     med_id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255)
