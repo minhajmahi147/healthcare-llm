@@ -2,7 +2,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Patient
 from .permissions import IsDoctor
 
 
@@ -45,30 +44,11 @@ def doctor_me(request):
 
     return Response(_doctor_payload(doctor))
 
-"""  this function is used to list or assign patients for the current doctor """
-@api_view(["GET", "POST"])
+"""  this function is used to list assigned patients for the current doctor """
+@api_view(["GET"])
 @permission_classes([IsAuthenticated, IsDoctor])
 def doctor_patients(request):
-    """List or assign patients for the current doctor."""
+    """List patients assigned to the current doctor. Assignment is staff-only."""
     doctor = request.user.doctor_profile
-
-    if request.method == "GET":
-        patients = [_patient_payload(p) for p in doctor.assigned_patients.all()]
-        return Response({"assigned_patients": patients})
-
-    patient_id = request.data.get("patient_id")
-    if not patient_id:
-        return Response({"error": "patient_id is required"}, status=400)
-
-    try:
-        patient = Patient.objects.get(patient_id=patient_id)
-    except Patient.DoesNotExist:
-        return Response({"error": "Patient not found"}, status=404)
-
-    doctor.assigned_patients.add(patient)
-    return Response(
-        {
-            "message": "Patient assigned",
-            "assigned_patients": [_patient_payload(p) for p in doctor.assigned_patients.all()],
-        }
-    )
+    patients = [_patient_payload(p) for p in doctor.assigned_patients.all()]
+    return Response({"assigned_patients": patients})

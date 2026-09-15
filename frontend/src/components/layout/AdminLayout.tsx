@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 
 const navItems = [
   { to: '/admin', label: 'Patients', end: true },
+  { to: '/admin/doctors', label: 'Doctors', end: false },
   { to: '/admin/register', label: 'Register Admin', end: false },
 ];
 

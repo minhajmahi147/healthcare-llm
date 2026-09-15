@@ -11,6 +11,7 @@ import {
   PublicRoute,
   StaffRoute,
 } from '@/components/layout/ProtectedRoute';
+import { AdminDoctorsPage } from '@/pages/AdminDoctorsPage';
 import { AdminPatientDetailPage } from '@/pages/AdminPatientDetailPage';
 import { AdminPatientsPage } from '@/pages/AdminPatientsPage';
 import { AdminRegisterPage } from '@/pages/AdminRegisterPage';
@@ -53,6 +54,7 @@ export default function App() {
         <Route element={<AdminLayout />}>
           <Route path="/admin" element={<AdminPatientsPage />} />
           <Route path="/admin/patients/:patientId" element={<AdminPatientDetailPage />} />
+          <Route path="/admin/doctors" element={<AdminDoctorsPage />} />
           <Route path="/admin/register" element={<AdminRegisterPage />} />
         </Route>
       </Route>

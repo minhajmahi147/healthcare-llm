@@ -1,6 +1,20 @@
 /**
  * Types for staff admin patient APIs.
  */
+
+export interface AssignedPatient {
+  patient_id: number;
+  name: string;
+  email: string | null;
+}
+
+export interface AdminDoctor {
+  doctor_id: number;
+  name: string;
+  department: string;
+  assigned_patients: AssignedPatient[];
+}
+
 export interface AdminPatientSummary {
   patient_id: number;
   name: string;
