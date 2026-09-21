@@ -12,6 +12,7 @@ import type {
   AdminPatientDetail,
   AdminPatientSummary,
 } from '@/types/admin.types';
+import type { Cabin, CabinApplication } from '@/types/cabin.types';
 
 export const adminApi = {
   listPatients: () =>
@@ -36,5 +37,53 @@ export const adminApi = {
     apiClient<AdminDoctor>(
       `/admin/doctors/${doctorId}/patients/${patientId}/`,
       { method: 'DELETE', auth: true },
+    ),
+
+  listCabins: () =>
+    apiClient<Cabin[]>('/cabins/admin/cabins/', { auth: true }),
+
+  createCabin: (payload: {
+    number: string;
+    cabin_type: string;
+    nightly_rate: string;
+  }) =>
+    apiClient<Cabin>('/cabins/admin/cabins/', {
+      method: 'POST',
+      auth: true,
+      body: payload,
+    }),
+
+  updateCabin: (
+    cabinId: number,
+    payload: Partial<{
+      number: string;
+      cabin_type: string;
+      nightly_rate: string;
+      is_active: boolean;
+    }>,
+  ) =>
+    apiClient<Cabin>(`/cabins/admin/cabins/${cabinId}/`, {
+      method: 'PATCH',
+      auth: true,
+      body: payload,
+    }),
+
+  listCabinApplications: (status?: string) => {
+    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+    return apiClient<CabinApplication[]>(`/cabins/admin/applications/${query}`, {
+      auth: true,
+    });
+  },
+
+  approveCabinApplication: (applicationId: number) =>
+    apiClient<CabinApplication>(
+      `/cabins/admin/applications/${applicationId}/approve/`,
+      { method: 'POST', auth: true },
+    ),
+
+  rejectCabinApplication: (applicationId: number, reason?: string) =>
+    apiClient<CabinApplication>(
+      `/cabins/admin/applications/${applicationId}/reject/`,
+      { method: 'POST', auth: true, body: { reason: reason || '' } },
     ),
 };

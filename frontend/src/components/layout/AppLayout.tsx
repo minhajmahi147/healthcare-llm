@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/cabins', label: 'Cabins' },
   { to: '/health-profile', label: 'Health Profile' },
   { to: '/health-plan', label: 'Health Plan' },
   { to: '/dietary', label: 'Dietary' },

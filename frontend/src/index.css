@@ -531,6 +531,16 @@ select {
   color: var(--primary-dark);
 }
 
+.pill-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.pill-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

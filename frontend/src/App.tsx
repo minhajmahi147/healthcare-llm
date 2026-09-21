@@ -11,10 +11,12 @@ import {
   PublicRoute,
   StaffRoute,
 } from '@/components/layout/ProtectedRoute';
+import { AdminCabinsPage } from '@/pages/AdminCabinsPage';
 import { AdminDoctorsPage } from '@/pages/AdminDoctorsPage';
 import { AdminPatientDetailPage } from '@/pages/AdminPatientDetailPage';
 import { AdminPatientsPage } from '@/pages/AdminPatientsPage';
 import { AdminRegisterPage } from '@/pages/AdminRegisterPage';
+import { CabinsPage } from '@/pages/CabinsPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { DietaryPage } from '@/pages/DietaryPage';
 import { HealthPlanPage } from '@/pages/HealthPlanPage';
@@ -42,6 +44,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/cabins" element={<CabinsPage />} />
           <Route path="/health-profile" element={<HealthProfilePage />} />
           <Route path="/health-plan" element={<HealthPlanPage />} />
           <Route path="/dietary" element={<DietaryPage />} />
@@ -55,6 +58,7 @@ export default function App() {
           <Route path="/admin" element={<AdminPatientsPage />} />
           <Route path="/admin/patients/:patientId" element={<AdminPatientDetailPage />} />
           <Route path="/admin/doctors" element={<AdminDoctorsPage />} />
+          <Route path="/admin/cabins" element={<AdminCabinsPage />} />
           <Route path="/admin/register" element={<AdminRegisterPage />} />
         </Route>
       </Route>

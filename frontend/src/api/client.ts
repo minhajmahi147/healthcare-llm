@@ -10,6 +10,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api';
 type RequestOptions = Omit<RequestInit, 'body'> & {
   body?: unknown;
   auth?: boolean;
+  blob?: boolean;
 };
 
 /** Clears the session and redirects to /login when refresh fails. */
@@ -59,7 +60,7 @@ async function refreshAccessToken(): Promise<string | null> {
  *    and retries the request with the new access token.
  * 3. If refresh fails, clears tokens, redirects to `/login`, and throws `ApiError`.
  * 4. For any other non-OK status, parses the Django error body and throws `ApiError`.
- * 5. Returns `undefined` for HTTP 204; otherwise parses and returns JSON as `T`.
+ * 5. Returns `undefined` for HTTP 204; a `Blob` when `blob: true`; otherwise JSON as `T`.
  *
  * Used by `auth.api`, `health.api`, `admin.api`, and `prescription.api`.
  */
@@ -67,7 +68,7 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, auth = false, headers, ...rest } = options;
+  const { body, auth = false, headers, blob = false, ...rest } = options;
 
   const requestHeaders = new Headers(headers);
   if (body !== undefined && !(body instanceof FormData)) {
@@ -110,5 +111,6 @@ export async function apiClient<T>(
   }
 
   if (response.status === 204) return undefined as T;
+  if (blob) return (await response.blob()) as T;
   return (await response.json()) as T;
 }

@@ -24,6 +24,11 @@ const quickLinks = [
     description: 'See meal suggestions tailored to your profile.',
   },
   {
+    to: '/cabins',
+    title: 'Cabins',
+    description: 'Apply for a free cabin. Staff approval allots the room and creates an invoice.',
+  },
+  {
     to: '/prescription',
     title: 'Prescription Upload',
     description: 'Upload PDF prescriptions for automated processing.',

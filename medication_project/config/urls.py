@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/', include('medication.urls')),
     path('api/auth/', include('accounts.urls')),   # 👈 ADD THIS
     path('api/health/', include('healthprofile.urls')),   # 👈 ADD THIS
+    path('api/cabins/', include('cabins.urls')),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

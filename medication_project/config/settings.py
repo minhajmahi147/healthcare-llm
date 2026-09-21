@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'medication',
     'healthprofile',
     'accounts',
+    'cabins',
     'rest_framework',
 ]
 
